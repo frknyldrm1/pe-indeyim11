@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pesindeyim – Panel</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+    }
+    .hareket {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 5px solid #007bff;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .etiket {
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      color: white;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+    .etiket.tiklama { background-color: #28a745; }
+    .etiket.cikis { background-color: #dc3545; }
+    .zaman {
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Kullanıcı Hareket Paneli</h1>
+  <div id="hareketListesi"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-IyBQTmgzfOxqEu2bAeKe2FT88NWUqyo",
+      authDomain: "pesindeyim-7e723.firebaseapp.com",
+      databaseURL: "https://pesindeyim-7e723-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "pesindeyim-7e723",
+      storageBucket: "pesindeyim-7e723.appspot.com",
+      messagingSenderId: "513944589879",
+      appId: "1:513944589879:web:0a00f2b97baff6adfb91b2",
+      measurementId: "G-CSXLC2RHNP"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const hareketRef = db.ref("hareketler");
+    const liste = document.getElementById("hareketListesi");
+
+    function tarihFormatla(isoZaman) {
+      const tarih = new Date(isoZaman);
+      return tarih.toLocaleString("tr-TR", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+    }
+
+    // Tüm sayfaların altındaki hareketleri oku
+    hareketRef.once("value", function(snapshot) {
+      snapshot.forEach(function(pageSnap) {
+        const pageName = pageSnap.key;
+        pageSnap.forEach(function(hareketSnap) {
+          const veri = hareketSnap.val();
+
+          const div = document.createElement("div");
+          div.className = "hareket";
+
+          const etiket = document.createElement("span");
+          etiket.className = "etiket";
+          if (veri.event === "click" || veri.olay === "butona_tiklama") {
+            etiket.classList.add("tiklama");
+            etiket.textContent = "Tıklama";
+          } else if (veri.event === "page_exit") {
+            etiket.classList.add("cikis");
+            etiket.textContent = "Sayfa Çıkışı";
+          } else {
+            etiket.style.background = "#6c757d";
+            etiket.textContent = veri.event || veri.olay || "Olay";
+          }
+
+          const zaman = document.createElement("div");
+          zaman.className = "zaman";
+          zaman.textContent = tarihFormatla(veri.time || veri.zaman || new Date().toISOString());
+
+          const sayfa = document.createElement("div");
+          sayfa.style.fontSize = "13px";
+          sayfa.style.marginBottom = "5px";
+          sayfa.textContent = "📄 Sayfa: " + pageName.replace(/_/g, "/");
+
+          div.appendChild(etiket);
+          div.appendChild(sayfa);
+          div.appendChild(zaman);
+          liste.prepend(div);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
